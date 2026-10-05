@@ -14,6 +14,18 @@
 .vscode/
 .idea/
 
+# Python / ML
+__pycache__/
+*.pyc
+*.csv
+*.h5
+venv/
+.env
+
+# Logs
+logs/
+*.log
+
 # OS
 .DS_Store
 Thumbs.db
