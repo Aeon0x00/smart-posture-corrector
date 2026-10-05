@@ -1,6 +1,3 @@
-// Auto-generated binary posture model
-// Good posture (1) vs Bad posture (0)
-
 #ifndef POSTURE_MODEL_H
 #define POSTURE_MODEL_H
 
@@ -258,4 +255,4 @@ const unsigned char posture_model[] = {
 };
 const unsigned int posture_model_len = 2988;
 
-#endif // POSTURE_MODEL_H
+#endif

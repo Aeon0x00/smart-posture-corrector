@@ -13,9 +13,13 @@ smart-posture-corrector/
 │   ├── flowchart_loop.png
 │   └── flowchart_setup.png
 ├── firmware/
-│   ├── smart_posture_corrector.ino  # Основная прошивка с TFLite Micro
-│   ├── posture_monitor_calibration.ino # Прошивка с индивидуальной калибровкой
-│   └── posture_model.h              # Скомпилированные веса модели (C-массив)
+│   ├── smart_posture_corrector.ino  # Главный координатор системы
+│   ├── config.h                     # Конфигурация пинов, порогов и гиперпараметров
+│   ├── imu.h / imu.cpp              # Драйвер MPU-6050 и EMA-фильтрация
+│   ├── classifier.h / classifier.cpp # Инференс TinyML (TFLite Micro)
+│   ├── feedback.h / feedback.cpp    # Неблокирующий контроллер виброотклика
+│   ├── posture_model.h              # Скомпилированные веса модели (C-массив)
+│   └── calibration/                 # Утилиты калибровки сенсора
 ├── training/
 │   ├── generate_dataset.py          # Генерация датасета акселерометра
 │   ├── train_model.py               # Обучение модели и экспорт в TFLite / C-header

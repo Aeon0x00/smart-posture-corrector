@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
@@ -54,8 +54,6 @@ history = model.fit(
 )
 
 test_loss, test_acc = model.evaluate(X_test, y_test)
-print(f"Test accuracy: {test_acc:.4f}, loss: {test_loss:.4f}")
-
 model.save('posture_binary_model.h5')
 
 converter = tf.lite.TFLiteConverter.from_keras_model(model)
