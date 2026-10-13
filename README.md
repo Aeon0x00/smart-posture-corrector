@@ -1,29 +1,25 @@
 # Smart Posture Corrector (TinyML on ESP32-S3)
 
-Носимое устройство для мониторинга и коррекции осанки в реальном времени с использованием TinyML (TensorFlow Lite for Microcontrollers) на микроконтроллере ESP32-S3 и акселерометре MPU-6050.
+Носимое устройство для мониторинга и коррекции осанки в реальном времени с использованием TinyML (TensorFlow Lite for Microcontrollers) на микроконтроллере ESP32-S3 и трехосевом акселерометре MPU-6050.
 
 ## Структура проекта
 
 ```text
 smart-posture-corrector/
-├── assets/                          # Графики обучения и схемы работы
-│   ├── confusion_matrix_binary.png
-│   ├── training_binary_history.png
-│   ├── flowchart_inference.png
-│   ├── flowchart_loop.png
-│   └── flowchart_setup.png
+├── assets/
+│   └── training_binary_history.png  # График обучения модели (Loss / Accuracy)
 ├── firmware/
 │   ├── smart_posture_corrector.ino  # Главный координатор системы
 │   ├── config.h                     # Конфигурация пинов, порогов и гиперпараметров
 │   ├── imu.h / imu.cpp              # Драйвер MPU-6050 и EMA-фильтрация
 │   ├── classifier.h / classifier.cpp # Инференс TinyML (TFLite Micro)
 │   ├── feedback.h / feedback.cpp    # Неблокирующий контроллер виброотклика
-│   ├── posture_model.h              # Скомпилированные веса модели (C-массив)
+│   ├── posture_model.h              # Квантованные веса модели (C-массив)
 │   └── calibration/                 # Утилиты калибровки сенсора
 ├── training/
-│   ├── generate_dataset.py          # Генерация датасета акселерометра
-│   ├── train_model.py               # Обучение модели и экспорт в TFLite / C-header
-│   ├── normalization_params.txt     # Параметры нормализации (mean, std)
+│   ├── generate_dataset.py          # Генерация синтетического датасета акселерометра
+│   ├── train_model.py               # Обучение MLP-классификатора и экспорт в TFLite
+│   ├── normalization_params.txt     # Параметры стандартизации (mean, std)
 │   └── posture_model.tflite         # Квантованная модель TFLite
 ├── platformio.ini                   # Конфигурация для сборки в PlatformIO
 ├── .gitignore
@@ -32,41 +28,29 @@ smart-posture-corrector/
 
 ## Аппаратная часть
 
-- Микроконтроллер: ESP32-S3-ZERO
-- IMU: MPU-6050 (I2C)
-- Виброотклик: вибромотор 3V, управляемый через N-канальный MOSFET 2N7002 (GPIO 4)
-- Питание: Li-Po аккумулятор 3.7V с контроллером заряда TP4056
+- **Микроконтроллер:** ESP32-S3 (ESP32-S3-ZERO)
+- **Сенсор (IMU):** MPU-6050 (интерфейс I2C)
+- **Виброотклик:** миниатюрный вибромотор 3V, управляемый через N-канальный MOSFET 2N7002
+- **Питание:** Li-Po аккумулятор 3.7V с платой контроллера заряда TP4056
 
-### Подключение
+## Обучение модели (TinyML Pipeline)
 
-- `MPU-6050 SDA` -> `GPIO 8`
-- `MPU-6050 SCL` -> `GPIO 9`
-- `Вибромотор (MOSFET Gate)` -> `GPIO 4`
+Классификатор построен на базе полносвязной нейросети (MLP):
+- Вход: 3 признака (ускорения `acc_x`, `acc_y`, `acc_z` с EMA-фильтрацией)
+- Скрытые слои: Dense(16, ReLU) -> Dropout -> Dense(8, ReLU) -> Dropout
+- Выход: Dense(1, Sigmoid) — вероятность правильной осанки
 
-## Обучение модели
-
-1. Генерация данных:
+1. **Генерация датасета:**
    ```bash
    python training/generate_dataset.py
    ```
-2. Обучение классификатора и экспорт в `posture_model.h`:
+2. **Обучение модели и экспорт весов:**
    ```bash
    python training/train_model.py
    ```
 
-![Confusion Matrix](assets/confusion_matrix_binary.png)
+Скрипт автоматически сохраняет параметры нормализации (`normalization_params.txt`), квантует модель в формат TFLite и генерирует заголовочный C-файл `posture_model.h` для прошивки.
 
-## Прошивка
+### Результаты обучения
 
-### Через Arduino IDE
-1. Установите поддержку плат ESP32 (версия 2.0.x / 3.0.x).
-2. Установите библиотеку `Chirale_TensorFlowLite` (или `TensorFlowLite_ESP32`).
-3. Откройте [firmware/smart_posture_corrector.ino](firmware/smart_posture_corrector.ino).
-4. Выберите плату `ESP32S3 Dev Module`.
-5. Загрузите прошивку и откройте Serial Monitor на скорости `115200`.
-
-### Через PlatformIO
-```bash
-pio run --target upload
-pio device monitor
-```
+![История обучения](assets/training_binary_history.png)
